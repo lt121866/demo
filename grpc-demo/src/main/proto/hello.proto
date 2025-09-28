@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package com.liutai.grpc;
+
+// 生成 Java 类的包名
+option java_package = "com.liutai.grpc";
+
+option java_outer_classname = "HelloService";
+
+service HelleMessage{
+
+    rpc sendHello(HelloRequest) returns (HelloResponse);
+}
+
+message HelloRequest{
+
+  string  name = 1;
+}
+
+message HelloResponse{
+
+  int32 code = 1;
+  string message = 2;
+}
