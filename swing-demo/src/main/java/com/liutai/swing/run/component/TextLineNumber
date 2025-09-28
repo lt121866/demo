@@ -1,0 +1,84 @@
+package com.liutai.swing.run.component;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
+
+public class TextLineNumber extends JComponent {
+    private JTextArea textArea;
+    public void setTextArea(JTextArea area) {
+        this.textArea = area;
+        // 监听文本变化，重绘行号
+        area.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                repaint();
+            }
+        });
+        // 监听滚动，同步重绘
+        area.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                repaint();
+            }
+        });
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (textArea == null) return;
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2.setFont(textArea.getFont());
+        g2.setBackground(textArea.getBackground());
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.setColor(textArea.getForeground());
+        FontMetrics fm = textArea.getFontMetrics(textArea.getFont());
+        int lineHeight = fm.getHeight();
+        int fontAscent = fm.getMaxAscent();
+        // ✅ 获取当前可视区域
+        Rectangle drawHere = g.getClipBounds();
+        try {
+            // ✅ 将可视区域的 Y 坐标转换为模型中的偏移量
+            int firstVisibleOffset = textArea.viewToModel2D(new Point(0, drawHere.y));
+            // ✅ 获取该偏移量对应的行号
+            int startLine = textArea.getLineOfOffset(firstVisibleOffset);
+            // ✅ 计算起始 Y 位置（基于可视区域）
+            int y = drawHere.y;
+            // ✅ 只绘制可视区域内的行
+            int leftMargin = 4; // 距离左边 4px
+            while (y < drawHere.y + drawHere.height && startLine < textArea.getLineCount()) {
+                String lineNum = String.valueOf(startLine + 1);
+                // ✅ 正确对齐：y + fontAscent
+                int x = leftMargin;
+                g2.drawString(lineNum, x, y + fontAscent);
+                y += lineHeight;
+                startLine++;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        if (textArea == null) return new Dimension(50, 100);
+        // 计算最大行号宽度
+        int maxLines = textArea.getLineCount();
+        int digits = Math.max(3, String.valueOf(maxLines).length());
+        int width = digits * 8 + 50;
+        return new Dimension(width, textArea.getHeight());
+    }
+}
