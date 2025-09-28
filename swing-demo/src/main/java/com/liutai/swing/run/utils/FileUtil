@@ -1,0 +1,96 @@
+package com.liutai.swing.run.utils;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
+public class FileUtil {
+
+    // 创建文件树
+    public static JTree createFileTree() {
+        // 默认根节点：用户主目录
+        File rootFile = new File("D:\\liutai\\project\\pythonProject\\liutai");
+        DefaultMutableTreeNode root = buildTreeNode(rootFile);
+
+        DefaultTreeModel treeModel = new DefaultTreeModel(root);
+        JTree tree = new JTree(treeModel);
+        // 允许展开/折叠
+        tree.setRootVisible(true);
+        tree.setShowsRootHandles(true);
+
+        // 可选：添加展开监听（懒加载可在此实现）
+        tree.expandRow(0); // 展开根节点
+
+        return tree;
+    }
+
+    // 递归构建树节点（简单实现）
+    public static DefaultMutableTreeNode buildTreeNode(File file) {
+        DefaultMutableTreeNode node = new DefaultMutableTreeNode(new FileNode(file));
+
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File child : files) {
+                    // 只添加前几项避免卡顿，生产环境建议异步或懒加载
+                    if (node.getChildCount() < 100) { // 限制子节点数量
+                        node.add(buildTreeNode(child));
+                    }
+                }
+            }
+        }
+        return node;
+    }
+
+    // 封装 File 对象，用于显示文件名（而不是完整路径）
+    public static class FileNode {
+        private File file;
+
+        public FileNode() {
+
+        }
+
+        public FileNode(File file) {
+            this.file = file;
+        }
+
+        public File getFile() {
+            return file;
+        }
+
+        @Override
+        public String toString() {
+            return file.getName().isEmpty() ? file.getPath() : file.getName();
+        }
+    }
+
+    public static boolean isTextFile(File file) {
+        String name = file.getName().toLowerCase();
+        return name.endsWith(".txt") || name.endsWith(".java") || name.endsWith(".json")
+                || name.endsWith(".xml") || name.endsWith(".html") || name.endsWith(".css")
+                || name.endsWith(".js") || name.endsWith(".properties") || name.endsWith(".md");
+    }
+
+    public static void displayFileContent(JTextArea contentArea, File file) {
+        contentArea.setText(""); // 清空
+        try {
+            StringBuilder content = new StringBuilder();
+            List<String> stringList = Files.readAllLines(Paths.get(file.getPath()));
+            for (String context : stringList) {
+                content.append(context).append("\n");
+            }
+            contentArea.setText(content.toString());
+
+        } catch (UnsupportedEncodingException e) {
+            contentArea.setText("错误：不支持的编码格式。");
+        } catch (FileNotFoundException e) {
+            contentArea.setText("错误：文件未找到。\n" + e.getMessage());
+        } catch (IOException e) {
+            contentArea.setText("读取文件时发生错误：\n" + e.getMessage());
+        }
+    }
+}
