@@ -1,1 +1,14 @@
+package com.liutai.swing.manager.layout;
 
+/**
+ * 布局类型
+ */
+public enum LayoutEnum {
+
+    FlowLayout,
+    BorderLayout,
+    GridLayout,
+    BoxLayout,
+    GridBagLayout,
+    CardLayout,
+}
